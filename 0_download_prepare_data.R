@@ -8,7 +8,7 @@
 rm(list=ls()) #removing previous objects
 
 # Load or install required packages-------------
-packages = c('dplyr','curl','jsonlite','ggplot2','R.utils')
+packages = c('dplyr','curl','jsonlite','ggplot2','R.utils','zoo')
 
 
 package.check = lapply(packages, FUN = function(x) {
@@ -50,12 +50,17 @@ cv_all$city<-toupper(cv_all$city)
 cv_all$date<-as.Date(cv_all$date)
 
 #Removing data with undefined city----------
+cv_cases_state<-cv_all%>%select(-city,-city_code)%>%filter(place_type=='state')
 cv_cases_ind<-cv_all%>%filter(place_type!='state' & city=='IMPORTADOS/INDEFINIDOS')
 cv_cases<-cv_all%>%filter(place_type=='city' & city!='IMPORTADOS/INDEFINIDOS')
 
 #Get the last available data--------------
 cv_today<-cv_cases%>%filter(is_last=='True')
+cv_today_state<-cv_cases_state%>%filter(is_last=='True')
+
+#Check data
 sum(cv_today$deaths)
+sum(cv_today_state$deaths)
 sum(cv_today$new_deaths)
 cv_today_ind<-cv_cases_ind%>%filter(is_last=='True')
 sum(cv_today_ind$deaths)
@@ -68,6 +73,11 @@ cv_cases<-cv_cases%>%
   mutate(cases7=rollapply(new_cases, 7, mean, align='right',fill=NA,na.rm=T),
          deaths7=rollapply(new_deaths, 7, mean, align='right',fill=NA,na.rm=T))
 
+cv_cases_state<-cv_cases_state%>%
+  arrange(state_code,date)%>%
+  group_by(state_code)%>%
+  mutate(cases7=rollapply(new_cases, 7, mean, align='right',fill=NA,na.rm=T),
+         deaths7=rollapply(new_deaths, 7, mean, align='right',fill=NA,na.rm=T))
 
 #Calculating weekly numbers-------------
 cv_cases_week<-cv_cases%>%group_by(city_code,city,state,state_code,week)%>%
@@ -75,10 +85,17 @@ cv_cases_week<-cv_cases%>%group_by(city_code,city,state,state_code,week)%>%
             cases=max(cases),deaths=max(deaths),
             new_cases=sum(new_cases),new_deaths=sum(new_deaths),
             pop=mean(pop),
-            cases100k=mean(cases100k))
-cv_cases_week=as.data.frame(cv_cases_week)
+            cases100k=mean(cases100k))%>%
+  as.data.frame()
+  
+
 
 #save RDA----------
 save(cv_cases,cv_cases_week, cv_today,
-     file=paste0('input_data/cv_data_',Sys.Date(),'.Rda'))
+     file='input_data/cv_data.Rda')
 
+
+#Saving csv files
+write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
+write.csv(cv_today,'output_data/cv_cases_today.csv')
+write.csv(cv_cases,'output_data/cv_cases.csv')

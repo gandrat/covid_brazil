@@ -49,6 +49,7 @@ sum(cv_bra$new_deaths)
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
 
+cv_rgi$state<-replace(x=cv_rgi$state, which(cv_rgi$state=='DF'),'GO')
 
 for(s in unique(cv_rgi$state)){
   ggplot(cv_rgi%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
@@ -57,7 +58,7 @@ for(s in unique(cv_rgi$state)){
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Deaths per 100k')
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgi.jpg'), width=15, height=18, units='cm',dpi=300)
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgi.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
 
@@ -85,6 +86,7 @@ cv_bra$pop<-sum(rgintpop$pop)
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
 
+cv_rgint$state<-replace(x=cv_rgint$state, which(cv_rgi$state=='DF'),'GO')
 
 for(s in unique(cv_rgint$state)){
   ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
@@ -93,7 +95,7 @@ for(s in unique(cv_rgint$state)){
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Deaths per 100k')
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint.jpg'), width=15, height=18, units='cm',dpi=300)
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
 

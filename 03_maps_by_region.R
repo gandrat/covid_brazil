@@ -46,21 +46,21 @@ ggplot(state)+
   scale_fill_distiller(palette='Oranges',direction = 1)+
   # coord_sf(xlim = c(bbox[1]-.2, bbox[3]+.2), ylim = c(bbox[2]-.2, bbox[4]+.2), expand = FALSE)+
   theme(legend.position = 'bottom')
-ggsave('figures/bra_rgint_deaths.jpg', width=15, height=18, units='cm',dpi=300)
+ggsave('figures/bra_rgint_deaths.jpg', width=20, height=20, units='cm',dpi=300)
 
 
 
 #RGI
-cv_rgi_today<-cv_today%>%group_by(rgi_code, rgi,  state)%>%
+cv_rgi_today<-cv_today%>%group_by(rgi_code, rgi, state)%>%
   summarise(cases=sum(cases),
             deaths=sum(deaths),
             pop=sum(pop),
             deaths100k=sum(deaths)*100000/sum(pop))
 
 rgi<-merge(rgi,cv_rgi_today,by='rgi_code')
-s='RS'
 
-for(s in unique(cv_rgi_today$state)){
+rgi$state<-replace(x=rgi$state, which(rgi$state=='DF'),'GO')
+for(s in unique(rgi$state)){
 d<-rgi%>%filter(state==sprintf(s,'%s'))
 bbox<-st_bbox(d)
   ggplot(state)+
@@ -69,7 +69,7 @@ bbox<-st_bbox(d)
     scale_fill_distiller(palette='Oranges',direction = 1)+
     coord_sf(xlim = c(bbox[1]-.2, bbox[3]+.2), ylim = c(bbox[2]-.2, bbox[4]+.2), expand = FALSE)+
     theme(legend.position = 'bottom')
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_map_deaths.jpg'), width=15, height=18, units='cm',dpi=300)
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_map_deaths.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
           

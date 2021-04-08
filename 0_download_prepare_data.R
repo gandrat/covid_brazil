@@ -54,6 +54,8 @@ cv_cases_state<-cv_all%>%select(-city,-city_code)%>%filter(place_type=='state')
 cv_cases_ind<-cv_all%>%filter(place_type!='state' & city=='IMPORTADOS/INDEFINIDOS')
 cv_cases<-cv_all%>%filter(place_type=='city' & city!='IMPORTADOS/INDEFINIDOS')
 
+
+
 #Get the last available data--------------
 cv_today<-cv_cases%>%filter(is_last=='True')
 cv_today_state<-cv_cases_state%>%filter(is_last=='True')
@@ -91,7 +93,7 @@ cv_cases_week<-cv_cases%>%group_by(city_code,city,state,state_code,week)%>%
 
 
 #save RDA----------
-save(cv_cases,cv_cases_week, cv_today,
+save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state,
      file='input_data/cv_data.Rda')
 
 
@@ -99,3 +101,4 @@ save(cv_cases,cv_cases_week, cv_today,
 write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
 write.csv(cv_today,'output_data/cv_cases_today.csv')
 write.csv(cv_cases,'output_data/cv_cases.csv')
+write.csv(cv_cases_state,'output_data/cv_cases_states.csv')

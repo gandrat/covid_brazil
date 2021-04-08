@@ -86,14 +86,28 @@ cv_cases_week<-cv_cases%>%group_by(city_code,city,state,state_code,week)%>%
   summarise(date=max(date),
             cases=max(cases),deaths=max(deaths),
             new_cases=sum(new_cases),new_deaths=sum(new_deaths),
-            pop=mean(pop),
-            cases100k=mean(cases100k))%>%
+            pop=mean(pop))%>%
   as.data.frame()
+
+cv_cases_week<-cv_cases_week%>%mutate(cases100k=new_cases*100000/pop,
+                                                  deaths100k=new_deaths*100000/pop)
+
+
+
+cv_cases_state_week<-cv_cases_state%>%group_by(state,state_code,week)%>%
+  summarise(date=max(date),
+            cases=max(cases),deaths=max(deaths),
+            new_cases=sum(new_cases),new_deaths=sum(new_deaths),
+            pop=mean(pop))%>%
+  as.data.frame()
+
+cv_cases_state_week<-cv_cases_state_week%>%mutate(cases100k=new_cases*100000/pop,
+                                                  deaths100k=new_deaths*100000/pop)
   
 
 
 #save RDA----------
-save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state,
+save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
      file='input_data/cv_data.Rda')
 
 
@@ -102,3 +116,4 @@ write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
 write.csv(cv_today,'output_data/cv_cases_today.csv')
 write.csv(cv_cases,'output_data/cv_cases.csv')
 write.csv(cv_cases_state,'output_data/cv_cases_states.csv')
+write.csv(cv_cases_state_week,'output_data/cv_cases_states_week.csv')

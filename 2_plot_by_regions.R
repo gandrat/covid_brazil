@@ -19,7 +19,7 @@ theme_set(
 #Load COVID data--------
 load('input_data/cv_data.Rda')
 sum(cv_today$deaths)
-sum(cv_cases_state$deaths)
+sum(cv_today_state$deaths)
 
 #Load Cities data
 load('input_data/cities.Rda')
@@ -29,11 +29,13 @@ cities<-merge(cities,cit,by='city_code')
 
 
 
-cvw<-cv_cases_week%>%select(city_code,city,state,date,week, cases, deaths, new_cases, new_deaths)
+cvw<-cv_cases_week%>%select(city_code,city,state,date,week, cases, deaths, new_cases, new_deaths,deaths100k,cases100k)
 cvw<-merge(cvw,cities%>%select(city_code,rgint_code,rgint,rgi_code,rgi,pop), by='city_code')
 max(cvw$week)
 cvw<-cvw%>%filter(week!=max(cvw$week))
-#Agregating for Brazil
+
+
+#Agregating for Brazil-------
 cv_bra<-cvw%>%group_by(week)%>%summarise(date=min(date),
                                          week=min(week,na.rm = T),
                                          new_cases=sum(new_cases, na.rm=T),
@@ -125,6 +127,31 @@ for(s in unique(cv_rgint$state)){
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
+#Boxplots by RGINT----
+s='RS'
+for(s in unique(cvw$state)){
+  ggplot(cvw%>%filter(state==sprintf(s,'%s')),aes(x=as.factor(week),y=deaths100k))+
+    geom_boxplot(outlier.shape = NA)+
+    facet_wrap(~rgint)+
+    geom_path(data=cv_bra,aes(x=as.factor(week),y=deaths100k,group=1, inherit.aes=F),size=.2)+
+    theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Deaths per 100k')+
+    ylim(c(0,50))+
+    ggtitle(sprintf(s,'%s'))
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint_boxplot.jpg'), width=15, height=20, units='cm',dpi=300)
+}
+
+for(s in unique(cv_rgint$state)){
+  ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
+    geom_bar(stat='identity',fill='grey')+
+    facet_wrap(~rgint)+
+    geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
+    theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Cases per 100k')+
+    ggtitle(sprintf(s,'%s'))
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
+}
+
 #Plots for DF--------------------
 
 #Change state for RMB (DF X GO)
@@ -140,7 +167,7 @@ ggplot(cvw_df,aes(x=date,y=cases100k))+
   geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
   theme(axis.text.x = element_text(angle = 90))+
   xlab(NULL)+ylab('Cases per 100k')+
-  ggtitle('Região Metropolitana de Brasília')
+  ggtitle('Área Metropolitana de Brasília')
 ggsave('figures/DF_cases_city.jpg', width=15, height=20, units='cm',dpi=300)
 
 ggplot(cvw_df,aes(x=date,y=deaths100k))+
@@ -149,6 +176,26 @@ ggplot(cvw_df,aes(x=date,y=deaths100k))+
   geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
   theme(axis.text.x = element_text(angle = 90))+
   xlab(NULL)+ylab('Deaths per 100k')+
-  ggtitle('Região Metropolitana de Brasília')
+  ggtitle('Área Metropolitana de Brasília')
 ggsave('figures/DF_deaths_city.jpg', width=15, height=20, units='cm',dpi=300)
 
+#Plots by States--------------
+for(s in unique(cv_cases_state_week$state)){
+  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
+    geom_bar(stat='identity',fill='grey')+
+    geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
+    theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Cases per 100k')+
+    ggtitle(sprintf(s,'%s'))
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_state.jpg'), width=15, height=10, units='cm',dpi=300)
+}
+
+for(s in unique(cv_cases_state_week$state)){
+  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
+    geom_bar(stat='identity',fill='grey')+
+    geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
+    theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Deaths per 100k')+
+    ggtitle(sprintf(s,'%s'))
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_state.jpg'), width=15, height=10, units='cm',dpi=300)
+}

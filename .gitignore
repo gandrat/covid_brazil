@@ -29,6 +29,7 @@ vignettes/*.pdf
 input_data
 figures
 shapes
+old
 output_data
 mapas_rgi.qgz
 .Rproj.user

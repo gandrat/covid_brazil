@@ -28,5 +28,8 @@ vignettes/*.pdf
 .Renviron
 input_data
 figures
+shapes
 output_data
 mapas_rgi.qgz
+.Rproj.user
+shapes.zip

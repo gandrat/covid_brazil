@@ -128,7 +128,7 @@ for(s in unique(cv_city_sf$state)){
     scale_fill_distiller(palette='Oranges',direction = 1)+
     coord_sf(xlim = c(bbox[1]-.2, bbox[3]+.2), ylim = c(bbox[2]-.2, bbox[4]+.2), expand = FALSE)+
     labs(fill='Óbitos por 100 mil hab')+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Municípios'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_map_deaths_city.jpg'), width=20, height=20, units='cm',dpi=300)
 }
 
@@ -139,23 +139,22 @@ cv_city_today$state<-replace(x=cv_city_today$state, which(cv_city_today$state=='
 
 for(s in unique(rgi$state)){
   d<-rgi%>%filter(state==sprintf(s,'%s'))
-  c<-cv_city_today%>%filter(state==sprintf(s,'%s'))
+  # c<-cv_city_today%>%filter(state==sprintf(s,'%s'))
   
   bbox<-st_bbox(d)
   
   ggplot(state)+
     geom_sf()+
     geom_sf(data=d,aes(fill=deaths100k),size=.1)+
-    geom_sf(data=c,aes(size=deaths100k),alpha=.1)+
+    # geom_sf(data=c,aes(size=deaths100k),alpha=.1)+
     scale_fill_distiller(palette='Oranges',direction = 1)+
     coord_sf(xlim = c(bbox[1]-.2, bbox[3]+.2), ylim = c(bbox[2]-.2, bbox[4]+.2), expand = FALSE)+
     labs(fill='Óbitos por 100 mil hab')+
     theme(legend.position = 'bottom')+
     ggtitle(paste0(sprintf(s,'%s'),' - Regiões Imediatas'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_map_deaths.jpg'), 
+  ggsave(paste0('figures/',sprintf(s,'%s'),'_map_deaths_rgi.jpg'), 
          width=20, height=25, units='cm',dpi=300)
 }
-
 
 
 #Maps for DF-----------

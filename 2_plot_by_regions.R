@@ -21,7 +21,9 @@ Sys.setlocale(category = "LC_TIME", locale = "pt_BR.utf8")
 load('input_data/cv_data.Rda')
 sum(cv_today$deaths)
 sum(cv_today_state$deaths)
-
+max(cv_today$week)
+dates<-(cv_cases%>%filter(week==202115)%>%select(date))
+unique(dates$date)
 #Load Cities data
 load('input_data/cities.Rda')
 
@@ -37,10 +39,10 @@ max(cvw$week)
 max(cvw$date)
 
 #Agregating for Brazil-------
-cv_bra<-cvw%>%group_by(week)%>%summarise(date=min(date),
-                                         week=min(week,na.rm = T),
+cv_bra<-cvw%>%group_by(week)%>%summarise(date=max(date),
                                          new_cases=sum(new_cases, na.rm=T),
-                                         new_deaths=sum(new_deaths,na.rm=T))
+
+                                                                                  new_deaths=sum(new_deaths,na.rm=T))
 cv_bra$pop<-sum(cities$pop)
 
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
@@ -70,7 +72,7 @@ for(s in unique(cv_rgs$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões de Saúde'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -82,7 +84,7 @@ for(s in unique(cv_rgs$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões de Saúde'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_regsaude.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -111,7 +113,7 @@ for(s in unique(cv_rgi$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões Imediatas'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgi.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -123,7 +125,7 @@ for(s in unique(cv_rgi$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões Imediatas'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgi.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -155,7 +157,7 @@ for(s in unique(cv_rgint$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões Intermediárias'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -167,7 +169,7 @@ for(s in unique(cv_rgint$state)){
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
+    ggtitle(paste0(sprintf(s,'%s'),' - Regiões Intermediárias'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
@@ -225,28 +227,28 @@ for(s in unique(cv_cases_state_week$state)){
 }
 
 
-#SCRAPBOOK----------------
-#Boxplots by RGINT----
-s='RS'
-for(s in unique(cvw$state)){
-  ggplot(cvw%>%filter(state==sprintf(s,'%s')),aes(x=as.factor(week),y=deaths100k))+
-    geom_boxplot(outlier.shape = NA)+
-    facet_wrap(~rgint)+
-    geom_path(data=cv_bra,aes(x=as.factor(week),y=deaths100k,group=1, inherit.aes=F),size=.2)+
-    theme(axis.text.x = element_text(angle = 90))+
-    xlab(NULL)+ylab('Deaths per 100k')+
-    ylim(c(0,50))+
-    ggtitle(sprintf(s,'%s'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint_boxplot.jpg'), width=15, height=20, units='cm',dpi=300)
-}
-
-for(s in unique(cv_rgint$state)){
-  ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
-    facet_wrap(~rgint)+
-    geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
-    theme(axis.text.x = element_text(angle = 90))+
-    xlab(NULL)+ylab('Cases per 100k')+
-    ggtitle(sprintf(s,'%s'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
-}
+# #SCRAPBOOK----------------
+# #Boxplots by RGINT----
+# s='RS'
+# for(s in unique(cvw$state)){
+#   ggplot(cvw%>%filter(state==sprintf(s,'%s')),aes(x=as.factor(week),y=deaths100k))+
+#     geom_boxplot(outlier.shape = NA)+
+#     facet_wrap(~rgint)+
+#     geom_path(data=cv_bra,aes(x=as.factor(week),y=deaths100k,group=1, inherit.aes=F),size=.2)+
+#     theme(axis.text.x = element_text(angle = 90))+
+#     xlab(NULL)+ylab('Deaths per 100k')+
+#     ylim(c(0,50))+
+#     ggtitle(sprintf(s,'%s'))
+#   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint_boxplot.jpg'), width=15, height=20, units='cm',dpi=300)
+# }
+# 
+# for(s in unique(cv_rgint$state)){
+#   ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
+#     geom_bar(stat='identity',fill='grey')+
+#     facet_wrap(~rgint)+
+#     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
+#     theme(axis.text.x = element_text(angle = 90))+
+#     xlab(NULL)+ylab('Cases per 100k')+
+#     ggtitle(sprintf(s,'%s'))
+#   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
+# }

@@ -111,9 +111,4 @@ save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_
      file='input_data/cv_data.Rda')
 
 
-#Saving csv files
-write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
-write.csv(cv_today,'output_data/cv_cases_today.csv')
-write.csv(cv_cases,'output_data/cv_cases.csv')
-write.csv(cv_cases_state,'output_data/cv_cases_states.csv')
-write.csv(cv_cases_state_week,'output_data/cv_cases_states_week.csv')
+

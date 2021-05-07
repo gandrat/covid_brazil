@@ -19,11 +19,17 @@ theme_set(
 Sys.setlocale(category = "LC_TIME", locale = "pt_BR.utf8")
 #Load COVID data--------
 load('input_data/cv_data.Rda')
-sum(cv_today$deaths)
-sum(cv_today_state$deaths)
-max(cv_today$week)
-dates<-(cv_cases%>%filter(week==202115)%>%select(date))
-unique(dates$date)
+
+#Set maximum date
+maxdate<-'2021-05-02'
+cv_cases<-cv_cases%>%filter(date<=maxdate)
+cv_today<-cv_cases%>%filter(date==maxdate)
+cv_cases_week<-cv_cases_week%>%filter(week<=unique(cv_today$week))
+cv_cases_state<-cv_cases_state%>%filter(date<=maxdate)
+cv_today_state<-cv_cases_state%>%filter(date==maxdate)
+cv_cases_state_week<-cv_cases_state_week%>%filter(week<=unique(cv_today$week))
+
+
 #Load Cities data
 load('input_data/cities.Rda')
 
@@ -226,6 +232,18 @@ for(s in unique(cv_cases_state_week$state)){
   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_state.jpg'), width=15, height=10, units='cm',dpi=300)
 }
 
+
+#save RDA----------
+save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
+     file='input_data/cv_data_v5.Rda')
+
+#Saving csv files-------------
+write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
+write.csv(cv_today,'output_data/cv_cases_today.csv')
+write.csv(cv_cases,'output_data/cv_cases.csv')
+write.csv(cv_cases_state,'output_data/cv_cases_states.csv')
+write.csv(cv_cases_state_week,'output_data/cv_cases_states_week.csv')
+write.csv(cv_rgs,'output_data/cv_cases_regsaude_week.csv')
 
 # #SCRAPBOOK----------------
 # #Boxplots by RGINT----

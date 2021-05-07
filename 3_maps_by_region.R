@@ -18,10 +18,10 @@ theme_set(
 )
 
 #Load COVID data--------
-load('input_data/cv_data.Rda')
+load('input_data/cv_data_v5.Rda')
 sum(cv_today$deaths)
 max(cv_today$date)
-sum(cv_cases)
+
 
 #Load Cities data
 load('input_data/cities.Rda')

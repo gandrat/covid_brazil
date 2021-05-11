@@ -18,7 +18,7 @@ theme_set(
 )
 
 #Load COVID data--------
-load('input_data/cv_data_v5.Rda')
+load('input_data/cv_data_V5_MT.Rda')
 sum(cv_today$deaths)
 max(cv_today$date)
 

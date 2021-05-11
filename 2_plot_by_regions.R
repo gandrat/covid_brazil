@@ -18,7 +18,7 @@ theme_set(
 
 Sys.setlocale(category = "LC_TIME", locale = "pt_BR.utf8")
 #Load COVID data--------
-load('input_data/cv_data.Rda')
+load('input_data/cv_data_V5_MT.Rda')
 
 #Set maximum date
 maxdate<-'2021-05-02'
@@ -38,15 +38,24 @@ cities<-merge(cities,cit,by='city_code')
 
 
 
-cvw<-cv_cases_week%>%select(city_code,city,state,date,week, cases, deaths, new_cases, new_deaths,deaths100k,cases100k)
+cvw<-cv_cases_week%>%transmute(city_code=city_code,
+                          city=city,
+                          state=state,
+                          date=date,
+                          week=week,
+                          cases=cases, 
+                          deaths=deaths, 
+                          new_cases=new_cases,
+                          new_deaths=new_deaths,
+                          deaths100k=deaths100k,
+                          cases100k=cases100k)
 cvw<-merge(cvw,cities%>%select(city_code,rgint_code,rgint,rgi_code,rgi, regsaude, nome_reg, pop), by='city_code')
 max(cvw$week)
-# cvw<-cvw%>%filter(week!=max(cvw$week))
 max(cvw$date)
 
 #Agregating for Brazil-------
-cv_bra<-cvw%>%group_by(week)%>%summarise(date=max(date),
-                                         new_cases=sum(new_cases, na.rm=T),
+cv_bra<-cvw%>%group_by(week)%>%summarise(date=min(date),
+                                         new_cases=sum(cases, na.rm=T),
 
                                                                                   new_deaths=sum(new_deaths,na.rm=T))
 cv_bra$pop<-sum(cities$pop)
@@ -54,7 +63,7 @@ cv_bra$pop<-sum(cities$pop)
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
 
-
+max(cv_bra$week)
 #Plots by RegSaude-----------
 cv_rgs<-cvw%>%group_by(regsaude, nome_reg,state, week)%>%
   summarise(date=min(date),
@@ -72,10 +81,11 @@ cv_rgs<-cv_rgs%>%filter(state!='DF')
 s='RS'
 for(s in unique(cv_rgs$state)){
   ggplot(cv_rgs%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~nome_reg)+
-    geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
-    theme(axis.text.x = element_text(angle = 90))+
+    geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1),size=.2)+
+    theme(axis.text.x = element_text(angle = 90),
+          legend.position = 'bottom')+
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
     ggtitle(paste0(sprintf(s,'%s'),' - Regiões de Saúde'))
@@ -84,7 +94,7 @@ for(s in unique(cv_rgs$state)){
 
 for(s in unique(cv_rgs$state)){
   ggplot(cv_rgs%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~nome_reg)+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -113,7 +123,7 @@ cv_rgi<-cv_rgi%>%filter(state!='DF')
 
 for(s in unique(cv_rgi$state)){
   ggplot(cv_rgi%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~rgi)+
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -125,7 +135,7 @@ for(s in unique(cv_rgi$state)){
 
 for(s in unique(cv_rgi$state)){
   ggplot(cv_rgi%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~rgi)+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -157,7 +167,7 @@ cv_rgint$state<-replace(x=cv_rgint$state, which(cv_rgint$state=='DF'),'GO')
 
 for(s in unique(cv_rgint$state)){
   ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~rgint)+
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -169,7 +179,7 @@ for(s in unique(cv_rgint$state)){
 
 for(s in unique(cv_rgint$state)){
   ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     facet_wrap(~rgint)+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -190,7 +200,7 @@ unique(cvw_df%>%select(city_code,city))
 cvw_df<-cvw_df%>%mutate(cases100k=new_cases*100000/pop,deaths100k=new_deaths*100000/pop)
 
 ggplot(cvw_df,aes(x=date,y=cases100k))+
-  geom_bar(stat='identity',fill='grey')+
+  geom_area(fill='grey')+
   facet_wrap(~city)+
   geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
   theme(axis.text.x = element_text(angle = 90))+
@@ -200,7 +210,7 @@ ggplot(cvw_df,aes(x=date,y=cases100k))+
 ggsave('figures/DF_cases_city.jpg', width=15, height=20, units='cm',dpi=300)
 
 ggplot(cvw_df,aes(x=date,y=deaths100k))+
-  geom_bar(stat='identity',fill='grey')+
+  geom_area(fill='grey')+
   facet_wrap(~city)+
   geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
   theme(axis.text.x = element_text(angle = 90))+
@@ -210,9 +220,10 @@ ggplot(cvw_df,aes(x=date,y=deaths100k))+
 ggsave('figures/DF_deaths_city.jpg', width=15, height=20, units='cm',dpi=300)
 
 #Plots by States--------------
+s='MT'
 for(s in unique(cv_cases_state_week$state)){
-  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
+  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
+    geom_area(fill='grey')+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos por 100 mil hab')+
@@ -223,7 +234,7 @@ for(s in unique(cv_cases_state_week$state)){
 
 for(s in unique(cv_cases_state_week$state)){
   ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
@@ -233,11 +244,11 @@ for(s in unique(cv_cases_state_week$state)){
 }
 
 
-#save RDA----------
-save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
-     file='input_data/cv_data_v5.Rda')
-
-#Saving csv files-------------
+# #save RDA----------
+# save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
+#      file='input_data/cv_data_v5.Rda')
+# 
+# #Saving csv files-------------
 write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
 write.csv(cv_today,'output_data/cv_cases_today.csv')
 write.csv(cv_cases,'output_data/cv_cases.csv')
@@ -245,28 +256,3 @@ write.csv(cv_cases_state,'output_data/cv_cases_states.csv')
 write.csv(cv_cases_state_week,'output_data/cv_cases_states_week.csv')
 write.csv(cv_rgs,'output_data/cv_cases_regsaude_week.csv')
 
-# #SCRAPBOOK----------------
-# #Boxplots by RGINT----
-# s='RS'
-# for(s in unique(cvw$state)){
-#   ggplot(cvw%>%filter(state==sprintf(s,'%s')),aes(x=as.factor(week),y=deaths100k))+
-#     geom_boxplot(outlier.shape = NA)+
-#     facet_wrap(~rgint)+
-#     geom_path(data=cv_bra,aes(x=as.factor(week),y=deaths100k,group=1, inherit.aes=F),size=.2)+
-#     theme(axis.text.x = element_text(angle = 90))+
-#     xlab(NULL)+ylab('Deaths per 100k')+
-#     ylim(c(0,50))+
-#     ggtitle(sprintf(s,'%s'))
-#   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_rgint_boxplot.jpg'), width=15, height=20, units='cm',dpi=300)
-# }
-# 
-# for(s in unique(cv_rgint$state)){
-#   ggplot(cv_rgint%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-#     geom_bar(stat='identity',fill='grey')+
-#     facet_wrap(~rgint)+
-#     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
-#     theme(axis.text.x = element_text(angle = 90))+
-#     xlab(NULL)+ylab('Cases per 100k')+
-#     ggtitle(sprintf(s,'%s'))
-#   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=15, height=20, units='cm',dpi=300)
-# }

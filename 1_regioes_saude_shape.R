@@ -15,25 +15,33 @@ tbregsaude<-read.csv2('input_data/tb_regsaud.csv',sep=',')
 rel<-read.csv('input_data/rl_municip_regsaud.csv')
 names(rel)<-c('co_municip','regsaude')
 
-tbcity<-merge(tbcity,rel,by='co_municip')
+tbcity<-merge(tbcity,rel,by='co_municip',all.x = T)
 
-tbcity<-merge(tbcity,tbregsaude,by='regsaude')
+tbcity<-merge(tbcity,tbregsaude,by='regsaude', all.x=T)
+
+View(tbcity%>%filter(is.na(regsaude)))
 cit<-cities_sf
 cit$geometry<-NULL
 
-cities_sf<-merge(cities_sf,tbcity,by='city_code')
+cities_sf<-merge(cities_sf,tbcity,by='city_code',all.x=T)
+View(cities_sf%>%filter(is.na(regsaude)))
+
 
 
 #Merge polygons-------------
 regsaude<-cities_sf%>%
-  group_by(regsaude)%>%
-  summarise(city_code=first(city_code),
-            city=first(city.x))
-write_sf(regsaude,'shapes/regsaude.shp')
+  group_by(regsaude,nome_reg)%>%
+  summarise(city=first(city.x)
+            city_code=first)
+
+plot(regsaude)
+write_sf(regsaude,'shapes/regsaudeV2.shp')
 
 plot(regsaude)
 
 #Aggregating regsaude in cities table (input for COVID data)------------
-# load('input_data/cities.Rda')
-# cities<-merge(cities%>%select(-regsaude),tbcity%>%select(city_code,regsaude,nome_reg),by='city_code',all.x=T)
+load('input_data/cities.Rda')
+cities<-merge(cities%>%select(-regsaude),tbcity%>%select(city_code,regsaude,nome_reg),by='city_code',all.x=T)
+
+View(cities%>%filter(is.na(regsaude)))
 # save(cities,file='input_data/cities.Rda')

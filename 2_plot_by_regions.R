@@ -80,7 +80,7 @@ cv_rgs<-cv_rgs%>%mutate(deaths100k=new_deaths*100000/pop,
 
 cv_rgs<-cv_rgs%>%filter(state!='DF')
 max(cv_rgs$deaths100k)
-s='SP'
+s='RS'
 for(s in unique(cv_rgs$state)){
   ggplot(cv_rgs%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
     geom_area(fill='grey')+
@@ -94,6 +94,7 @@ for(s in unique(cv_rgs$state)){
     ggtitle(paste0(sprintf(s,'%s'),' - Óbitos nas Regiões de Saúde'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=20, height=15, units='cm',dpi=300)
 }
+s='RS'
 
 for(s in unique(cv_rgs$state)){
   ggplot(cv_rgs%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
@@ -102,6 +103,7 @@ for(s in unique(cv_rgs$state)){
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos / 100 mil hab.')+
+    scale_y_continuous(breaks=c(0,100,200,300, 400),limits=c(0,500))+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
     ggtitle(paste0(sprintf(s,'%s'),' - Casos nas Regiões de Saúde'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_regsaude.jpg'), width=20, height=15, units='cm',dpi=300)
@@ -144,6 +146,7 @@ for(s in unique(cv_rgi$state)){
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos / 100 mil hab.')+
+    scale_y_continuous(breaks=c(0,100,200,300, 400),limits=c(0,500))+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
     ggtitle(paste0(sprintf(s,'%s'),' - Casos nas Regiões Imediatas'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgi.jpg'), width=20, height=15, units='cm',dpi=300)
@@ -189,6 +192,7 @@ for(s in unique(cv_rgint$state)){
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
     xlab(NULL)+ylab('Casos / 100 mil hab.')+
+    scale_y_continuous(breaks=c(0,100,200,300, 400),limits=c(0,500))+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
     ggtitle(paste0(sprintf(s,'%s'),' - Casos nas Regiões Intermediárias'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_rgint.jpg'), width=20, height=15, units='cm',dpi=300)
@@ -211,6 +215,7 @@ ggplot(cvw_df,aes(x=date,y=cases100k))+
   theme(axis.text.x = element_text(angle = 90))+
   xlab(NULL)+ylab('Casos / 100 mil hab.')+
   scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
+  scale_y_continuous(breaks=c(0,100,200,300, 400),limits=c(0,500))+
   ggtitle('Casos na Área Metropolitana de Brasília (AMB)')
 ggsave('figures/DF_cases_city.jpg', width=20, height=15, units='cm',dpi=300)
 
@@ -228,7 +233,7 @@ ggsave('figures/DF_deaths_city.jpg', width=20, height=15, units='cm',dpi=300)
 #Plots by States--------------
 s='MT'
 for(s in unique(cv_cases_state_week$state)){
-  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
+  ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
     geom_area(fill='grey')+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
     theme(axis.text.x = element_text(angle = 90))+
@@ -237,6 +242,7 @@ for(s in unique(cv_cases_state_week$state)){
     ggtitle(sprintf(s,'%s'))
   ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_state.jpg'), width=20, height=15, units='cm',dpi=300)
 }
+
 s='RS'
 
 for(s in unique(cv_cases_state_week$state)){

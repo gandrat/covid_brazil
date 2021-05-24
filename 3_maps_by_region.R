@@ -26,6 +26,7 @@ max(cv_today$date)
 #Load Cities data
 load('input_data/cities.Rda')
 
+View(cities%>%filter(state=='MG'))
 
 
 #Load Shapefiles--------

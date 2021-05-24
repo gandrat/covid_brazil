@@ -20,7 +20,7 @@ package.check = lapply(packages, FUN = function(x) {
 
 
 #Load MT_data-----------
-cv<-read_xlsx('input_data/MT_data_20210504.xlsx',skip = 2)
+cv<-read_xlsx('input_data/MT_data_20210510.xlsx',skip = 2)
 head(cv)
 
 #Aggregating by days---------------
@@ -34,10 +34,6 @@ cv_casesMT<-cv_casesMT%>%transmute(city=toupper(Municipio),
                                    new_deaths=new_deaths)
 cv_casesMT$Municipio<-NULL
 cv_casesMT$CodigoIBGE<-NULL
-cv_casesMT<-as.data.frame(cv_casesMT)
-
-#Solving city names problems
-cv_casesMT<-cv_casesMT%>%mutate(city=str_replace(city,'D OESTE',"D'OESTE"))
 
 #Completing Dates-----------
 cv_casesMT<-cv_casesMT%>%group_by(city)%>%
@@ -57,13 +53,12 @@ ggplot(cv_casesMT,aes(x=date,y=cases))+geom_bar(stat='identity')
 ggplot(cv_casesMT,aes(x=date,y=new_cases))+geom_bar(stat='identity')
 ggplot(cv_casesMT,aes(x=date,y=deaths))+geom_bar(stat='identity')
 
-#Merge with original data (brasil.io)
+str_replace(cv_casesMT,"D OESTE","D'OESTE")
+
+#Merge with original data (brasil.io)------------
 load('input_data/cv_data.Rda')
-cv_cases<-as.data.frame(cv_cases)
 cv_data<-cv_cases%>%filter(state=='MT')%>%select(city, city_code, pop, state, state_code)
 cv_data<-unique(cv_data)
-
-cv_casesMT%>%filter(city %in% cv_data$city==F)
 cv_casesMT<-merge(cv_casesMT,cv_data,by='city',all.x=T)
 head(cv_casesMT)
 
@@ -94,6 +89,10 @@ cv_casesMT<-cv_casesMT%>%
 head(cv_casesMT)
 head(cv_cases)
 
+#Set maximum date
+maxdate<-'2021-05-02'
+cv_casesMT<-cv_casesMT%>%filter(date<=maxdate)
+
 
 #Comparing data
 sum(cv_casesMT$new_deaths,na.rm=T)
@@ -116,18 +115,11 @@ cv_cases<-rbind(cv_cases,cv_casesMT)
 # cv_cases_state<-rbind(cv_cases_state,cv_cases_stateMT)
 
 sum(cv_cases$new_cases)
-sum(cv_cases$new_deaths)
+sum(cv_cases$new_deaths,na.rm=T)
 
 cv_cases<-cv_cases%>%mutate(week=strftime(date, format='%Y%V'))
 
-#Set maximum date
-maxdate<-'2021-05-02'
-cv_cases<-cv_cases%>%filter(date<=maxdate)
-
-cv_maxdate<-cv_cases%>%select(city_code,date)%>%group_by(city_code)%>%
-  summarise(maxdate=max(date))
-cv_today<-merge(cv_cases,cv_maxdate,by='city_code')
-cv_today<-cv_today%>%filter(date==maxdate)
+cv_today<-cv_cases%>%filter(date=='2021-05-02')
 
 #Calculating weekly numbers-------------
 cv_cases_week<-cv_cases%>%group_by(city_code,city,state,state_code,week)%>%

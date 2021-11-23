@@ -20,6 +20,7 @@ Sys.setlocale(category = "LC_TIME", locale = "pt_BR.utf8")
 #Load COVID data--------
 load('input_data/cv_data.Rda')
 sum(cv_today$deaths)
+max(cv_cases$date)
 sum(cv_today_state$deaths)
 max(cv_today$week)
 dates<-(cv_cases%>%filter(week==202115)%>%select(date))

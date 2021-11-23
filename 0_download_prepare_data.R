@@ -110,6 +110,27 @@ cv_cases_state_week<-cv_cases_state_week%>%mutate(cases100k=new_cases*100000/pop
 save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
      file='input_data/cv_data.Rda')
 
+#Filter for max book date (2021-05-02)
+load('input_data/cv_data.Rda')
+max(cv_cases$date)
+sum(cv_today$deaths)
+cv_cases<-cv_cases%>%filter(date<='2021-05-02')
+cv_cases_week<-cv_cases_week%>%filter(date<='2021-05-02')
+cv_cases_state<-cv_cases_state%>%filter(date<='2021-05-02')
+cv_cases_state_week<-cv_cases_state_week%>%filter(date<='2021-05-02')
+unique(cv_cases$city_code)
+cv_today<-cv_cases%>%group_by(city_code)%>%
+  summarise(date=max(date),
+            week=max(week),
+            cases=sum(new_cases),
+            cases100k=sum(new_cases*100000/pop),
+            deaths=sum(new_deaths),
+            deaths100k=sum(new_deaths*100000/pop),
+            death_rate=sum(new_deaths)/sum(new_cases),
+            pop=max(pop),
+            state=min(state),
+            state_code=min(state_code))
+            
 
 #Saving csv files
 write.csv(cv_cases_week,'output_data/cv_cases_week.csv')

@@ -21,11 +21,12 @@ theme_set(
 load('input_data/cv_data.Rda')
 sum(cv_today$deaths)
 max(cv_today$date)
+max(cv_cases$date)
 sum(cv_cases)
 
 #Load Cities data
 load('input_data/cities.Rda')
-
+View(cv_today%>%filter(city_code=='506275'))
 
 
 #Load Shapefiles--------
@@ -41,10 +42,11 @@ rgint<-read_sf('shapes/RG2017_rgint.shp')
 rgint<-rgint%>%transmute(rgint_code=as.numeric(rgint))
 
 rgs<-read_sf('shapes/regsaude.shp')
-
-city_sf<-read_sf('shapes/BRMUE250GC_SIR.shp')
-names(city_sf)<-c('city','city_code','geometry')
-city_sf<-city_sf%>%select(city_code)
+plot(rgs)
+city_sf<-read_sf('shapes/BR_Municipios_2020.shp')
+names(city_sf)<-c('city_code','city','state','area','geometry')
+city_sf<-city_sf%>%select(city_code, city)
+city_sf$city_code<-as.integer(city_sf$city_code)
 
 cv_today<-merge(cv_today,cities%>%select(city_code, rgint_code, rgint, rgi_code, rgi, regsaude, nome_reg),by='city_code')
 cv_city_today<-merge(cities_pt,cv_today,by='city_code')
@@ -52,8 +54,8 @@ cv_city_today<-merge(cities_pt,cv_today,by='city_code')
 cv_city_today$state<-replace(x=cv_city_today$state, which(cv_city_today$state=='DF'),'GO')
 cv_city_today$geometry<-NULL
 
-cv_city_sf<-merge(city_sf,cv_city_today,by='city_code')
-
+cv_city_sf<-merge(city_sf,cv_city_today,by='city_code',all.x=T)
+write_sf(cv_city_sf,dsn='output_data/cv_city.shp',layer_options = "ENCODING=UTF-8", delete_layer = TRUE)
 #RegSaude--------
 
 cv_rgs_today<-cv_today%>%group_by(regsaude, nome_reg,  state)%>%
@@ -62,6 +64,7 @@ cv_rgs_today<-cv_today%>%group_by(regsaude, nome_reg,  state)%>%
             pop=sum(pop),
             deaths100k=sum(deaths)*100000/sum(pop))
 rgs<-merge(rgs,cv_rgs_today,by='regsaude')
+write_sf(rgs,dsn='output_data/rgs_raw.shp')
 
 #RGINT-------------
 
@@ -81,7 +84,7 @@ cv_rgi_today<-cv_today%>%group_by(rgi_code, rgi, state)%>%
             deaths100k=sum(deaths)*100000/sum(pop))
 
 rgi<-merge(rgi,cv_rgi_today,by='rgi_code')
-
+plot(rgi)
 #Brazil Map------------
 
 ggplot()+

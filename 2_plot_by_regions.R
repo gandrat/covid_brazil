@@ -44,7 +44,7 @@ cv_bra<-cvw%>%group_by(week)%>%summarise(date=max(date),
                                          new_cases=sum(new_cases, na.rm=T),
 
                                                                                   new_deaths=sum(new_deaths,na.rm=T))
-cv_bra$pop<-sum(cities$pop)
+cv_bra$pop<-sum(cv_today_state$pop)
 
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
@@ -74,7 +74,7 @@ for(s in unique(cv_rgs$state)){
     xlab(NULL)+ylab('Óbitos por 100 mil hab')+
     scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
     ggtitle(paste0(sprintf(s,'%s'),' - Regiões de Saúde'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=15, height=20, units='cm',dpi=300)
+  ggsave(paste0('figures_V6/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=15, height=20, units='cm',dpi=300)
 }
 
 for(s in unique(cv_rgs$state)){
@@ -190,41 +190,45 @@ ggplot(cvw_df,aes(x=date,y=cases100k))+
   geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
   theme(axis.text.x = element_text(angle = 90))+
   xlab(NULL)+ylab('Cases per 100k')+
-  scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-  ggtitle('Área Metropolitana de Brasília')
+  scale_x_date(date_labels="%b %y",date_breaks  ="2 month",limits=c(as.Date('2020-03-01'),as.Date('2021-07-01')))+
+  ggtitle(NULL)
 ggsave('figures/DF_cases_city.jpg', width=15, height=20, units='cm',dpi=300)
 
 ggplot(cvw_df,aes(x=date,y=deaths100k))+
   geom_bar(stat='identity',fill='grey')+
   facet_wrap(~city)+
   geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
-  theme(axis.text.x = element_text(angle = 90))+
+  # theme(axis.text.x = element_text(angle = 90))+
   scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
   xlab(NULL)+ylab('Deaths per 100k')+
   ggtitle('Área Metropolitana de Brasília')
 ggsave('figures/DF_deaths_city.jpg', width=15, height=20, units='cm',dpi=300)
-
+max(cv_cases_state_week$date)
+s='RS'
 #Plots by States--------------
 for(s in unique(cv_cases_state_week$state)){
   ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=cases100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(stat='identity',fill='grey')+
+    geom_vline(xintercept=as.Date("2021-05-02"),linetype=2)+
     geom_path(data=cv_bra,aes(x=date,y=cases100k,group=1, inherit.aes=F),size=.2)+
-    theme(axis.text.x = element_text(angle = 90))+
-    xlab(NULL)+ylab('Casos por 100 mil hab')+
-    scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_cases_state.jpg'), width=15, height=10, units='cm',dpi=300)
+    # theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Casos / 100 mil hab')+
+    scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+    ggtitle(NULL)
+  ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_cases_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 }
 
+s<-'RS'
 for(s in unique(cv_cases_state_week$state)){
   ggplot(cv_cases_state_week%>%filter(state==sprintf(s,'%s')),aes(x=date,y=deaths100k))+
-    geom_bar(stat='identity',fill='grey')+
+    geom_area(fill='grey')+
     geom_path(data=cv_bra,aes(x=date,y=deaths100k,group=1, inherit.aes=F),size=.2)+
-    theme(axis.text.x = element_text(angle = 90))+
-    xlab(NULL)+ylab('Óbitos por 100 mil hab')+
-    scale_x_date(date_labels="%b %y",date_breaks  ="2 month")+
-    ggtitle(sprintf(s,'%s'))
-  ggsave(paste0('figures/',sprintf(s,'%s'),'_deaths_state.jpg'), width=15, height=10, units='cm',dpi=300)
+    geom_vline(xintercept=as.Date("2021-05-02"),linetype=2)+
+    # theme(axis.text.x = element_text(angle = 90))+
+    xlab(NULL)+ylab('Óbitos / 100 mil hab')+
+    scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+    ggtitle(NULL)
+  ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 }
 
 

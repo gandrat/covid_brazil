@@ -60,6 +60,7 @@ cv_cases<-cv_all%>%filter(place_type=='city' & city!='IMPORTADOS/INDEFINIDOS')
 cv_today<-cv_cases%>%filter(is_last=='True')
 cv_today_state<-cv_cases_state%>%filter(is_last=='True')
 
+
 #Check data
 sum(cv_today$deaths)
 sum(cv_today_state$deaths)
@@ -97,9 +98,10 @@ cv_cases_week<-cv_cases_week%>%mutate(cases100k=new_cases*100000/pop,
 cv_cases_state_week<-cv_cases_state%>%group_by(state,state_code,week)%>%
   summarise(date=max(date),
             cases=max(cases),deaths=max(deaths),
-            new_cases=sum(new_cases),new_deaths=sum(new_deaths),
-            pop=mean(pop))%>%
+            new_cases=sum(new_cases),new_deaths=sum(new_deaths))%>%
   as.data.frame()
+
+cv_cases_state_week<-merge(cv_cases_state_week,cv_today_state%>%select(state,pop),by='state')
 
 cv_cases_state_week<-cv_cases_state_week%>%mutate(cases100k=new_cases*100000/pop,
                                                   deaths100k=new_deaths*100000/pop)
@@ -108,7 +110,48 @@ cv_cases_state_week<-cv_cases_state_week%>%mutate(cases100k=new_cases*100000/pop
 
 #save RDA----------
 save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
+     file='input_data/cv_data_all.Rda')
+
+#Filter for max book date (2021-05-02)
+load('input_data/cv_data.Rda')
+max(cv_cases$date)
+sum(cv_today$deaths)
+cv_cases<-cv_cases%>%filter(date<='2021-11-21')%>%arrange(date)
+cv_cases_week<-cv_cases_week%>%filter(date<='2021-11-21')%>%arrange(date)
+cv_cases_state<-cv_cases_state%>%filter(date<='2021-11-21')%>%arrange(date)
+cv_cases_state_week<-cv_cases_state_week%>%filter(date<='2021-11-21')%>%arrange(date)
+unique(cv_cases$city_code)
+cv_today<-cv_cases%>%group_by(city_code)%>%filter(date<='2021-05-02')%>%
+  summarise(date=max(date),
+            week=max(week),
+            cases=sum(new_cases),
+            cases100k=sum(new_cases*100000/pop),
+            deaths=sum(new_deaths),
+            deaths100k=sum(new_deaths*100000/pop),
+            death_rate=sum(new_deaths)/sum(new_cases),
+            pop=max(pop),
+            state=min(state),
+            state_code=min(state_code))
+
+cv_today_state<-cv_cases_state%>%group_by(state)%>%filter(date<='2021-05-02')%>%
+  summarise(date=max(date),
+            week=max(week),
+            cases=sum(new_cases),
+            cases100k=sum(new_cases*100000/pop),
+            deaths=sum(new_deaths),
+            deaths100k=sum(new_deaths*100000/pop),
+            death_rate=sum(new_deaths)/sum(new_cases),
+            pop=max(pop),
+            state=min(state),
+            state_code=min(state_code))
+
+save(cv_cases,cv_cases_week, cv_today, cv_cases_state, cv_today_state, cv_cases_state_week,
      file='input_data/cv_data.Rda')
 
 
-
+#Saving csv files
+write.csv(cv_cases_week,'output_data/cv_cases_week.csv')
+write.csv(cv_today,'output_data/cv_cases_today.csv')
+write.csv(cv_cases,'output_data/cv_cases.csv')
+write.csv(cv_cases_state,'output_data/cv_cases_states.csv')
+write.csv(cv_cases_state_week,'output_data/cv_cases_states_week.csv')

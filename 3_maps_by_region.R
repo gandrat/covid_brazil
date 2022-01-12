@@ -18,15 +18,11 @@ theme_set(
 )
 
 #Load COVID data--------
-load('input_data/cv_data_v5.Rda')
+load('input_data/cv_data.Rda')
 sum(cv_today$deaths)
 max(cv_today$date)
-<<<<<<< HEAD
-
-=======
 max(cv_cases$date)
 sum(cv_cases)
->>>>>>> 3ef5acd948f5f2bd79dd2d31a24607ba66957492
 
 #Load Cities data
 load('input_data/cities.Rda')
@@ -42,11 +38,8 @@ cities_pt<-read_sf('shapes/municipios_pt.shp')
 head(cities_pt)
 cities_pt<-cities_pt%>%transmute(city_code=codmun2)
 
-rgint<-read_sf('shapes/RG2017_rgint.shp')
-rgint<-rgint%>%transmute(rgint_code=as.numeric(rgint))
 
-rgs<-read_sf('shapes/regsaude.shp')
-plot(rgs)
+
 city_sf<-read_sf('shapes/BR_Municipios_2020.shp')
 names(city_sf)<-c('city_code','city','state','area','geometry')
 city_sf<-city_sf%>%select(city_code, city)
@@ -60,35 +53,53 @@ cv_city_today$geometry<-NULL
 
 cv_city_sf<-merge(city_sf,cv_city_today,by='city_code',all.x=T)
 write_sf(cv_city_sf,dsn='output_data/cv_city.shp',layer_options = "ENCODING=UTF-8", delete_layer = TRUE)
-#RegSaude--------
 
-cv_rgs_today<-cv_today%>%group_by(regsaude, nome_reg,  state)%>%
+#RegSaude--------
+cv_today<-read_sf('output_data/cv_city.shp')
+unique(cv_today$regsaude)
+cv_today$geometry<-NULL
+
+rgs<-read_sf('shapes/regsaude.shp')
+# plot(rgs)
+
+cv_rgs_today<-cv_today%>%group_by(regsaude,nome_reg,state)%>%
   summarise(cases=sum(cases),
             deaths=sum(deaths),
             pop=sum(pop),
+            cases100k=sum(cases)*100000/sum(pop),
             deaths100k=sum(deaths)*100000/sum(pop))
-rgs<-merge(rgs,cv_rgs_today,by='regsaude')
-write_sf(rgs,dsn='output_data/rgs_raw.shp')
+rgs2<-merge(rgs,cv_rgs_today,by='regsaude')
+write_sf(rgs2,dsn='output_data/cv_rgs.shp')
 
 #RGINT-------------
+rgint<-read_sf('shapes/RG2017_rgint2.shp')
+rgint<-rgint%>%transmute(rgint_code=as.numeric(rgint))
 
 cv_rgint_today<-cv_today%>%group_by(rgint_code, rgint,  state)%>%
   summarise(cases=sum(cases),
             deaths=sum(deaths),
             pop=sum(pop),
+            cases100k=sum(cases)*100000/sum(pop),
             deaths100k=sum(deaths)*100000/sum(pop))
-rgint<-merge(rgint,cv_rgint_today,by='rgint_code')
+rgint2<-merge(rgint,cv_rgint_today,by='rgint_code',all.x=T)
 
+write_sf(rgint2,dsn='output_data/cv_rgint.shp',delete_layer=T,layer_options = "ENCODING=UTF-8")
 
-#RGI
+#RGI--------------
+rgi<-read_sf('shapes/RG2017_rgi2.shp')
+rgi<-rgi%>%transmute(rgi_code=as.numeric(rgi))
+
 cv_rgi_today<-cv_today%>%group_by(rgi_code, rgi, state)%>%
   summarise(cases=sum(cases),
             deaths=sum(deaths),
             pop=sum(pop),
+            cases100k=sum(cases)*100000/sum(pop),
             deaths100k=sum(deaths)*100000/sum(pop))
 
-rgi<-merge(rgi,cv_rgi_today,by='rgi_code')
-plot(rgi)
+rgi2<-merge(rgi,cv_rgi_today,by='rgi_code',all.x=T)
+
+write_sf(rgi2,dsn='output_data/cv_rgi.shp',delete_layer=T,layer_options = "ENCODING=UTF-8")
+
 #Brazil Map------------
 
 ggplot()+
@@ -140,6 +151,9 @@ for(s in unique(cv_city_sf$state)){
 }
 
 #Maps by RGI------------
+
+
+
 rgi$state<-replace(x=rgi$state, which(rgi$state=='DF'),'GO')
 cv_city_today$state<-replace(x=cv_city_today$state, which(cv_city_today$state=='DF'),'GO')
 

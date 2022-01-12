@@ -15,9 +15,9 @@ tbregsaude<-read.csv2('input_data/tb_regsaud.csv',sep=',')
 rel<-read.csv('input_data/rl_municip_regsaud.csv')
 names(rel)<-c('co_municip','regsaude')
 
-tbcity<-merge(tbcity,rel,by='co_municip')
+tbcity<-merge(tbcity,rel,by='co_municip',all.x = T)
 
-tbcity<-merge(tbcity,tbregsaude,by='regsaude')
+tbcity<-merge(tbcity,tbregsaude,by='regsaude',all.x = T)
 cit<-cities_sf
 cit$geometry<-NULL
 

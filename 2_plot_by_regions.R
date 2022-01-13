@@ -19,7 +19,7 @@ theme_set(
 
 Sys.setlocale(category = "LC_TIME", locale = "pt_BR.utf8")
 #Load COVID data--------
-load('input_data/cv_data.Rda')
+load('input_data/cv_data_V6_MT.Rda')
 sum(cv_today$deaths)
 max(cv_cases$date)
 sum(cv_today_state$deaths)
@@ -39,7 +39,8 @@ cvw<-merge(cvw,cities%>%select(city_code,rgint_code,rgint,rgi_code,rgi, regsaude
 max(cvw$week)
 # cvw<-cvw%>%filter(week!=max(cvw$week))
 max(cvw$date)
-
+cvw$week<-as.integer(cvw$week)
+unique(cvw$week)
 #Agregating for Brazil-------
 cv_bra<-cvw%>%group_by(week)%>%summarise(date=max(date),
                                          new_cases=sum(new_cases, na.rm=T),
@@ -49,7 +50,7 @@ cv_bra$pop<-sum(cv_today_state$pop)
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
 
-
+cv_bra<-arrange(cv_bra,date)
 cv_bra$state2='Brasil'
 
 
@@ -68,7 +69,7 @@ cv_rgs<-cv_rgs%>%mutate(deaths100k=new_deaths*100000/pop,
 
 cv_rgs<-cv_rgs%>%filter(state%in% c('AL','ES','MS','MT','PB','PE','SE','TO','RO','BA'))
 
-s='AL'
+s='MT'
 for(s in unique(cv_rgs$state)){
   d<-cv_rgs%>%filter(state==sprintf(s,'%s'))
   ymax=max(c(max(d$cases100k),max(cv_bra$cases100k)))
@@ -400,8 +401,100 @@ ggplot()+
   ylim(c(0,ymax+2))
 ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 
+#Plots by States - PA --------------
+#Cases
+d<-cv_cases_state_week%>%filter(state %in% c('PA','AM','RR','AC','AP','RO','TO'))
+ymax=max(c(max(d$cases100k),max(cv_bra$cases100k)))
+xmin=as.Date(min(cv_bra$date))
+ggplot()+
+  geom_area(data=d,aes(x=date,y=cases100k),stat='identity',fill='grey')+
+  facet_wrap(~state)+
+  geom_path(data=cv_bra,aes(x=date,y=cases100k,linetype=state2),size=.2)+
+  geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_fill_grey(start=.7,end=1)+
+  xlab(NULL)+ylab('Casos / 100 mil hab')+
+  scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+  ylim(c(0,ymax))+
+  theme(legend.position = c(.9,0.2), legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggsave('figures_v6/PA_cases_state_N.jpg', width=12.3, height=12.3, units='cm',dpi=300)
 
+#Plots by States - RN --------------
+#Cases
+d<-cv_cases_state_week%>%filter(state %in% c('RN'))
 
+#separando períodos
+d$fase<-ifelse(d$date<'2020-10-01','Fase 1','Fase 2')
+cv_bra$fase<-ifelse(cv_bra$date<'2020-10-01','Fase 1','Fase 2')
+
+d<-d%>%filter(date<='2021-05-03')
+ymax=max(c(max(d$cases100k),max(cv_bra$cases100k)))
+xmin=as.Date(min(cv_bra$date))
+ggplot()+
+  geom_area(data=d,aes(x=date,y=cases100k,fill=state),stat='identity')+
+  facet_wrap(~fase,scales='free_x',ncol=2)+
+  geom_path(data=cv_bra%>%filter(date<='2021-05-03'),aes(x=date,y=cases100k,linetype=state2),size=.2)+
+  # geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_fill_grey(start=.7,end=1)+
+  xlab(NULL)+ylab('Casos / 100 mil hab')+
+  scale_x_date(date_labels="%m/%Y",date_breaks  ="2 month")+
+  # ylim(c(0,ymax))+
+  theme(legend.position = 'bottom', legend.title = element_blank())
+ggsave('figures_v6/RN_cases_state_sep.jpg', width=12.3, height=12.3, units='cm',dpi=300)
+
+ggplot()+
+  geom_area(data=d,aes(x=date,y=deaths100k,fill=state),stat='identity')+
+  facet_wrap(~fase,scales='free_x',ncol=2)+
+  geom_path(data=cv_bra%>%filter(date<='2021-05-03'),aes(x=date,y=deaths100k,linetype=state2),size=.2)+
+  # geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_fill_grey(start=.7,end=1)+
+  xlab(NULL)+ylab('Óbitos / 100 mil hab')+
+  scale_x_date(date_labels="%m/%Y",date_breaks  ="2 month")+
+  # ylim(c(0,ymax))+
+  theme(legend.position = 'bottom', legend.title = element_blank())
+ggsave('figures_v6/RN_deaths_state_sep.jpg', width=12.3, height=12.3, units='cm',dpi=300)
+
+#Plots by States - PA --------------
+
+d<-cv_cases_state_week%>%filter(state %in% c('PA'))
+
+d<-d%>%select(state,date,cases100k,deaths100k)
+
+library(reshape2)
+d.m<-melt(d,id=c('state','date'))
+cv_bra.m<-melt(cv_bra%>%select(state2,date,cases100k,deaths100k),id=c('state2','date'))
+ggplot()+
+  geom_area(data=d.m,aes(x=date,y=value,fill=state),stat='identity')+
+  facet_wrap(~variable,scales='free_y',ncol=1,
+             strip.position = "left", 
+             labeller = as_labeller(c(cases100k = "Casos / 100 mil", 
+                                      deaths100k = "Óbitos / 100 mil") ) )+
+  
+  geom_path(data=cv_bra.m,aes(x=date,y=value,linetype=state2),size=.2)+
+  geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_fill_grey(start=.7,end=1)+
+  xlab(NULL)+ylab(NULL)+
+  scale_x_date(date_labels="%m/%Y",date_breaks  ="3 month")+
+  theme(legend.position = 'bottom', legend.title = element_blank(),
+        strip.background = element_blank(),
+        strip.placement = "outside")
+ggsave('figures_v6/PA_casesdeaths_state.jpg', width=12.3, height=12.3, units='cm',dpi=300)
+
+#período específico
+d<-cv_cases_state%>%filter(state %in% c('PA'),
+                           date>='2020-03-19',
+                           date<='2020-05-25')
+
+ggplot()+
+  geom_area(data=d,aes(x=date,y=cases100k,fill=state,),stat='identity')+
+  geom_path(data=cv_bra,aes(x=date,y=cases100k,linetype=state2, inherit.aes=F),size=.2)+
+  # annotate("text", x = as.Date("2021-05-02"), y = ymax,label = "Período fora do escopo dos capítulos")+
+  scale_fill_grey(start=.7,end=1)+
+  # theme(axis.text.x = element_text(angle = 90))+
+  xlab(NULL)+ylab('Casos / 100 mil')+
+  scale_x_date(date_labels="%d/%m/%y",date_breaks  ="15 days",limits = c(min(d$date),max(d$date)))+
+  theme(legend.position = c(0.1,0.7), legend.title = element_blank())
+ggsave('figures_v6/PA_cases_state_periodo.jpg', width=12.3, height=6.3, units='cm',dpi=300)
 #Plot by cities-----------
 cv_city<-cvw%>%filter(state%in% c('RO'))
 

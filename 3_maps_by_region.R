@@ -54,6 +54,8 @@ cv_city_today$geometry<-NULL
 cv_city_sf<-merge(city_sf,cv_city_today,by='city_code',all.x=T)
 write_sf(cv_city_sf,dsn='output_data/cv_city.shp',layer_options = "ENCODING=UTF-8", delete_layer = TRUE)
 
+View(cv_cases%>%filter(state=='RO')%>%arrange(date))
+
 #RegSaude--------
 cv_today<-read_sf('output_data/cv_city.shp')
 unique(cv_today$regsaude)

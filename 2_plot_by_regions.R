@@ -43,8 +43,7 @@ max(cvw$date)
 #Agregating for Brazil-------
 cv_bra<-cvw%>%group_by(week)%>%summarise(date=max(date),
                                          new_cases=sum(new_cases, na.rm=T),
-
-                                                                                  new_deaths=sum(new_deaths,na.rm=T))
+                                         new_deaths=sum(new_deaths,na.rm=T))
 cv_bra$pop<-sum(cv_today_state$pop)
 
 cv_bra<-cv_bra%>%mutate(deaths100k=new_deaths*100000/pop,
@@ -67,7 +66,7 @@ cv_rgs<-merge(cv_rgs,rgspop,by=c('regsaude','state'))
 cv_rgs<-cv_rgs%>%mutate(deaths100k=new_deaths*100000/pop,
                         cases100k=new_cases*100000/pop)
 
-cv_rgs<-cv_rgs%>%filter(state%in% c('AL','ES','MS','MT','PB','PE','SE','TO','RO'))
+cv_rgs<-cv_rgs%>%filter(state%in% c('AL','ES','MS','MT','PB','PE','SE','TO','RO','BA'))
 
 s='AL'
 for(s in unique(cv_rgs$state)){
@@ -107,6 +106,61 @@ for(s in unique(cv_rgs$state)){
   ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=12.3, height=12.3, units='cm',dpi=300)
 }
 
+#Plots by RegSaude - BA -------------
+
+#Agregating for BA
+cv_BA<-cvw%>%filter(state=='BA')%>%
+  group_by(week)%>%summarise(date=max(date),
+                             new_cases=sum(new_cases, na.rm=T),
+                             new_deaths=sum(new_deaths,na.rm=T))
+BA_pop<-unique(cv_today_state[which(cv_today_state$state=='BA'),'pop'])
+
+cv_BA<-cv_BA%>%mutate(deaths100k=new_deaths*100000/BA_pop$pop,
+                        cases100k=new_cases*100000/BA_pop$pop)
+cv_BA<-as.data.frame(cv_BA)
+
+
+cv_BA$state2='Bahia'
+
+s<-'BA'
+d<-cv_rgs%>%filter(state==sprintf(s,'%s'),
+                   nome_reg %in% c('Jacobina','Ribeira do Pombal','Ibotirama',
+                                   'Salvador','Itabuna','Ilhéus'))
+d<-d%>%mutate(top3=ifelse(nome_reg %in% c('Salvador','Itabuna','Ilhéus'),'Piores Desempenhos','Melhores Desempenhos'))
+
+#Casos
+ymax=max(c(max(d$cases100k),max(cv_bra$cases100k)))
+xmin=as.Date(min(cv_bra$date))
+ggplot(d)+
+  geom_area(data=d,aes(x=date,y=cases100k),stat='identity',fill='grey')+
+  facet_wrap(top3~nome_reg,drop=T)+
+  geom_path(data=cv_bra,aes(x=date,y=cases100k,linetype=state2),size=.2)+
+  geom_path(data=cv_BA,aes(x=date,y=cases100k,color=state2),size=.3)+
+  geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_color_manual(values = c("#de5004"))+
+  xlab(NULL)+ylab('Casos / 100 mil hab')+
+  scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+  ylim(c(0,ymax))+
+  theme(legend.position = 'bottom', legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_cases_regsaude.jpg'), width=12.3, height=12.3, units='cm',dpi=300)
+
+#Deaths
+ymax=max(c(max(d$deaths100k),max(cv_bra$deaths100k)))
+xmin=as.Date(min(cv_bra$date))
+ggplot()+
+  geom_area(data=d,aes(x=date,y=deaths100k),stat='identity',fill='grey')+
+  facet_wrap(top3~nome_reg)+
+  geom_path(data=cv_bra,aes(x=date,y=deaths100k,linetype=state2),size=.2)+
+  geom_path(data=cv_BA,aes(x=date,y=deaths100k,color=state2),size=.3)+
+  geom_vline(xintercept = as.Date('2021-05-02'),linetype=2,size=.2)+
+  scale_color_manual(values = c("#de5004"))+
+  xlab(NULL)+ylab('Óbitos / 100 mil hab')+
+  scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+  ylim(c(0,ymax))+
+  theme(legend.position = 'bottom', legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_regsaude.jpg'), width=12.3, height=12.3, units='cm',dpi=300)
 
 
 #Plots by rgi-----------
@@ -285,6 +339,7 @@ for(s in unique(cv_cases_state_week$state)){
   ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_cases_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 }
 
+
 #Deaths
 for(s in unique(cv_cases_state_week$state)){
   d<-cv_cases_state_week%>%filter(state==sprintf(s,'%s'))  
@@ -304,6 +359,46 @@ for(s in unique(cv_cases_state_week$state)){
   
   ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 }
+
+# Plots by States - BA -----------
+s<-'BA'
+d<-cv_cases_state_week%>%filter(state==sprintf(s,'%s'))
+ds<-d%>%filter(as.character(date) %in% c("2020-08-22","2020-11-14","2021-03-20","2021-05-01"))
+ymax=max(c(max(d$cases100k),max(cv_bra$cases100k)))
+ggplot()+
+  geom_area(data=d,aes(x=date,y=cases100k,fill=state,),stat='identity')+
+  geom_bar(data=ds,aes(x=date,y=cases100k),stat='identity',width = 7)+
+  geom_path(data=cv_bra,aes(x=date,y=cases100k,linetype=state2, inherit.aes=F),size=.2)+
+  geom_rect(aes(xmax=as.Date("2021-05-02"), xmin=min(d$date), ymin=0,ymax=ymax+30),
+            color='black', alpha=0, linetype=2)+
+  # annotate("text", x = as.Date("2021-05-02"), y = ymax,label = "Período fora do escopo dos capítulos")+
+  scale_fill_grey(start=.7,end=1)+
+  # theme(axis.text.x = element_text(angle = 90))+
+  xlab(NULL)+ylab('Casos / 100 mil hab')+
+  scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+  theme(legend.position = c(.9,0.8), legend.title = element_blank())+
+  ylim(c(0,ymax+30))
+ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_cases_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
+
+# Deaths
+s<-'BA'
+d<-cv_cases_state_week%>%filter(state==sprintf(s,'%s'))
+ds<-d%>%filter(as.character(date) %in% c("2020-08-22","2020-11-14","2021-03-20","2021-05-01"))
+ymax=max(c(max(d$deaths100k),max(cv_bra$deaths100k)))
+ggplot()+
+  geom_area(data=d,aes(x=date,y=deaths100k,fill=state,),stat='identity')+
+  geom_bar(data=ds,aes(x=date,y=deaths100k),stat='identity',width = 7)+
+  geom_path(data=cv_bra,aes(x=date,y=deaths100k,linetype=state2, inherit.aes=F),size=.2)+
+  geom_rect(aes(xmax=as.Date("2021-05-02"), xmin=min(d$date), ymin=0,ymax=ymax+2),
+            color='black', alpha=0, linetype=2)+
+  # annotate("text", x = as.Date("2021-05-02"), y = ymax,label = "Período fora do escopo dos capítulos")+
+  scale_fill_grey(start=.7,end=1)+
+  # theme(axis.text.x = element_text(angle = 90))+
+  xlab(NULL)+ylab('Óbitos / 100 mil hab')+
+  scale_x_date(date_labels="%b-%y",date_breaks  ="3 month")+
+  theme(legend.position = c(.9,0.8), legend.title = element_blank())+
+  ylim(c(0,ymax+2))
+ggsave(paste0('figures_v6/',sprintf(s,'%s'),'_deaths_state.jpg'), width=12.3, height=8, units='cm',dpi=300)
 
 
 

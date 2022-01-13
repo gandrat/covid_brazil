@@ -30,7 +30,7 @@ input_data
 figures
 shapes
 old
-figures_v6
+figures_v6/*
 output_data
 mapas_rgi.qgz
 .Rproj.user
